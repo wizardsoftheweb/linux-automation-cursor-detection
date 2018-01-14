@@ -60,6 +60,7 @@ OUTPUT = IMAGE.communicate()[0]
 DUMP.wait()
 RGB = COMPILED_RGB_PATTERN.match(OUTPUT)
 print("RGB: %s" % (RGB.group('rgb')))
+print("Mouse: (%d,%d)" % (MATCHED.group('x'), MATCHED.group('y')))
 END = time.time()
 
 print("Start: %s" % (START))
