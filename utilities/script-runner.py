@@ -66,14 +66,25 @@ def write_data(script_name, run_time, final_x, final_y, finished=None):
 
 def bootstrap():
     """Creates the initial state"""
+    LOGGER.debug('Seeding random')
     seed(DEFAULT_SEED)
-    return Promise.resolve(
-        write_data('script_name', 'run_time', 'final_x', 'final_y', 'finished')
-    )
+    if not isfile(DATA_FILE_NAME):
+        LOGGER.info('Creating data file')
+        return Promise.resolve(
+            write_data(
+                'script_name',
+                'run_time',
+                'final_x',
+                'final_y',
+                'finished'
+            )
+        )
+    return Promise.resolve('booted')
 
 
 def get_random_point():
     """Returns a random coordinate on the screen"""
+    LOGGER.debug('Creating random point')
     return randrange(0, SCREEN_WIDTH), randrange(0, SCREEN_HEIGHT)
 
 
