@@ -44,8 +44,8 @@ for raw_color in RESULTS:
         raw_color.green,
         raw_color.blue
     )
+print("RGB: (%d,%d,%d)" % (final[0] / 256, final[1] / 256, final[2] / 256))
 END = time.time()
-print('#%04x%04x%04x' % (final[0], final[1], final[2]))
 print("Start: %s" % (START))
 print("End: %s" % (END))
 print("Difference: %s" % (END - START))
