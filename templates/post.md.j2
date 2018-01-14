@@ -18,13 +18,19 @@ I've tossed around the idea of starting something similar for some time now. Obv
 
 ## Background
 
-Several months ago I began drafting a project along these lines. I think [RobotJS](http://robotjs.io/) is pretty neat, and I've been looking for an excuse to use it. Bundling it via [Electron](https://electronjs.org/) would make the result consumable everywhere, so sidestepping the AHK-proprietary concern.
+Several months ago I began drafting a project along these lines. I think [RobotJS](http://robotjs.io/) is pretty neat, and I've been looking for an excuse to use it. Bundling it via [Electron](https://electronjs.org/) would make the result consumable everywhere, sidestepping the AHK-proprietary concern.
 
 However, Electron is a Chromium wrapper. It's got a ton of bloat and the whole Chromium thing to worry about. I typically hit my macros pretty hard, so an app that has to juggle many intensive GUI actions while being an intensive GUI might not be the best. (Note: I didn't actually pursue this, so I could be totally wrong and Electron might be faster.) I decided to mess around with a few other ideas this weekend.
 
+I'd like to build something simple this weekend to figure out a few new components. I don't have any set goals, but these things are in the back of my head:
+
+* Lightweight: When Electron is your baseline everything's an improvement
+* Cross-platform: If nothing else, the RHEL and Debian ecosystems
+* Fast: I feel like 10+ ops a second isn't asking too much
+
 ## Software
 
-I mention this software during this post. I install everything here, but I remove some of it later. YMMV. If you're in the Debian ecosystem, this should work but the packages will probably have completely different names.
+I mention some software during this post. I install everything here, but I remove some of it later. YMMV. If you're in the Debian ecosystem, this should work but the packages will probably have completely different names.
 
 * [`xdotool` and its dependencies](http://www.semicomplete.com/projects/xdotool/)
     {{
@@ -115,7 +121,7 @@ Difference: 0.000105142593384
 """)
 }}
 
-The geometry is blazing fast and super simple. `pyautogui` can also work with the screen and detect images and colors. Detecting color under the cursor is a great way to trigger actions, especially in routine applications.
+`pyautogui` can also work with the screen's images and colors. Detecting color under the cursor is a great way to trigger actions, especially in routine applications.
 
 {{
     highlight_block(
