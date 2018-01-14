@@ -1,8 +1,26 @@
 {% from 'includes/shell_session.j2' import shell_session %}
 
-{% block lead_paragraph %}{% endblock %}
+{% block lead_paragraph %}
+{# I'm a huge fan of [AutoHotkey](https://autohotkey.com/). It's been an integral part of my computing world since undergrad. Scripting rote activities is both a load off my back and usually way more fun than actually doing the task. Unfortunately, AutoHotkey is built around the Windows ecosystem, so it's not portable.  #}
+
+{# I spent a considerable amount of time last year  #}
+
+{# I was messing around with some automation this weekend and ran into  #}
+
+I've been absolutely thrilled moving my home dev world back to Fedora. I'm not fighting OS ads, virtualization just works, and my settings actually stay the same after updates. I am, however, missing [AutoHotkey](https://autohotkey.com/). It's been an integral part of my computing world since undergrad. I've spent the better part of three years looking for a POSIX AHK clone with no luck.
+
+I've tossed around the idea of starting something similar for some time now. Obviously I don't have the expertise to make anything near as streamlined as AHK, but I do have the muleheadness to spend an entire weekend trying to bum a word or two from an `awk` chain. Tenacity is a useful trait when you have absolutely no idea what you're doing.
+{% endblock %}
 
 {% include 'includes/front_matter.j2' %}
 
-{% block content %}{% endblock %}
+{% block content %}
+
+## Background
+
+Several months ago I began drafting a project along these lines. I think [RobotJS](http://robotjs.io/) is pretty neat, and I've been looking for an excuse to use it. Bundling it via [Electron](https://electronjs.org/) would make the result consumable everywhere, so sidestepping the AHK-proprietary concern.
+
+However, Electron is a Chromium wrapper. It's got a ton of bloat and the whole Chromium thing to worry about. I typically hit my macros pretty hard, so an app that has to juggle many intensive GUI actions while being an intensive GUI might not be the best. (Note: I didn't actually pursue this, so I could be totally wrong and Electron might be faster.) I decided to mess around with a few other ideas this weekend.
+
+{% endblock %}
 
