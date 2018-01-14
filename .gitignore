@@ -1,0 +1,22 @@
+# Local configurations
+.gitconfig
+# Editors
+.idea
+*.sublime-*
+!detecting*.sublime-project
+# Generated folders
+.vagrant
+# Personal working files (you might not need these)
+scratch.ts
+**/scratch.py
+**/scratch.yml
+**/*.retry
+README.html
+notes.md
+# Temporary post files; can be unignored later
+post.md
+post.html
+vagrant.log
+vagrant-test
+build
+scratch.sh
