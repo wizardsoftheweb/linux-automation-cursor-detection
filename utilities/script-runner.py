@@ -43,7 +43,7 @@ CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
 LOGGER.addHandler(CONSOLE_HANDLER)
 
 
-def write_data(script_name, run_time, final_x, final_y, finished=unix_time()):
+def write_data(script_name, run_time, final_x, final_y, finished=None):
     """Log a test row"""
     LOGGER.info('Writing data to file')
     with open(DATA_FILE_NAME, 'a') as log_file:
@@ -53,6 +53,8 @@ def write_data(script_name, run_time, final_x, final_y, finished=unix_time()):
             quotechar='"',
             quoting=QUOTE_NONNUMERIC
         )
+        if finished is None:
+            finished = unix_time()
         log_writer.writerow(
             [script_name, run_time, final_x, final_y, finished]
         )
