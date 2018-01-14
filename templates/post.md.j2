@@ -171,6 +171,35 @@ Difference: 0.281718969345
 
 Smaller screens will do better; [the docs mention this](https://pyautogui.readthedocs.io/en/latest/screenshot.html#the-screenshot-function). I was able to cut my time by disabling my second screen. That's neither fun nor practical, so I put `pyautogui` aside for now.
 
+## Frankenstein
+
+I have to admit, I was kinda stumped at this point. `pyautogui` is well-written and seriously vetted. I too would have gone the screenshot route, which means I too would be much too slow. A different approach is necessary, but I don't know what.
+
+Luckily I stumbled into `xwd` via [a wonderfully succinct `bash` solution](https://stackoverflow.com/a/25498342/2877698). It's the [`X` `W`indow `D`umping utility](http://www.xfree86.org/current/xwd.1.html). That's insanely useful here, since X is what runs the system. `xwd`, in theory, has all of the screen information I could want. The linked solution uses ImageMagick [to convert the dump](https://github.com/ImageMagick/ImageMagick/blob/master/coders/xwd.c); not only did I not know it was possible to get an X dump, I also did not know ImageMagick would parse it beautifully (I would have guessed that part eventually).
+
+### `bash`
+{{
+    highlight_block(
+        join('scripts', 'xwd-convert.sh'),
+        blob_path=join('scripts', 'xwd-convert.sh'),
+        explicit_lexer_name = 'BashLexer',
+        external_source_link = 'https://stackoverflow.com/a/25498342/2877698',
+        title = 'xwd-convert.sh'
+    )
+}}
+
+{{
+    shell_session("""\
+$ scripts/xwd-convert.sh
+&num; ImageMagick pixel enumeration: 1,1,65535,srgb
+0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
+Start: 1515922099742
+End: 1515922100086
+Difference: 344
+""")
+}}
+
+That's even slower than `pyautogui`. To be fair, we should probably build it in Python.
 
 {% endblock %}
 
