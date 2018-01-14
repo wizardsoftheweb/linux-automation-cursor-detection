@@ -67,4 +67,31 @@ $ pip install --user  \
 """)
     }}
 
+## My First Cursor Position
+
+You can't automate the mouse if you don't know where it is. `xdotool` provides fast and easy access to the cursor (among other things!).
+
+{{
+    shell_session("""\
+$ xdotool getmouselocation
+x:2478 y:1603 screen:0 window:48234503
+$ xdotool getmouselocation --shell
+X=2468
+Y=1265
+SCREEN=0
+WINDOW=48234503
+$ eval $(xdotool getmouselocation --shell); echo $X
+2468
+$ eval $(xdotool getmouselocation --shell); echo $X
+2873
+$ eval $(xdotool getmouselocation --shell); echo $X
+2456
+""")
+}}
+
+The only downside is trying to consume this. It might be a better idea to try native options.
+
+
+
 {% endblock %}
+
