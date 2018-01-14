@@ -233,5 +233,38 @@ Difference: 0.338629961014
 
 However, that didn't seem to give us any extra time. Chaining the commands might work in our favor here.
 
+### Chained
+
+Rather than totally isolate the commands, we can redirect their output. It's not quite a shell, as the output from one is finished and sanitized before being sent on, but it functions in a similar manner.
+
+I spent at least an hour trying to figure out how to multiplex stdin on the file command. If you know of a clever way to do that without setting environment variables, I'd love to hear about it.
+
+{{
+    highlight_block(
+        join('scripts', 'xmd-convert-chained.py'),
+        blob_path=join('scripts', 'xmd-convert-chained.py'),
+        explicit_lexer_name = 'PythonLexer',
+        title = 'xmd-convert-chained.py'
+    )
+}}
+
+{{
+    shell_session("""\
+$ python scripts/xmd-convert-chained.py
+# ImageMagick pixel enumeration: 1,1,65535,srgb
+0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
+
+Start: 1515929723.34
+End: 1515929723.65
+Difference: 0.312852144241
+""")
+}}
+
+It's still absysmally slow. We haven't actually changed how we're getting the dump and parsing it, so that makes sense.
+
+### Shelled
+
+**DON'T DO THIS IN PRODUCTION**.
+
 {% endblock %}
 
