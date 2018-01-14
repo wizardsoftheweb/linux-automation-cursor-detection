@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 """This file illustrates a basic pyautogui setup"""
-
 from __future__ import print_function
+
 import time
 
 import pyautogui

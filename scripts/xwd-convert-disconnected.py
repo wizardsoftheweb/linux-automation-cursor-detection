@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """This file runs several commands without allowing them to communicate directly"""
 from __future__ import print_function
 

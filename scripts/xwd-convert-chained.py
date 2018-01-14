@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """This file runs several commands by linking stdout and stdin in subprocesses"""
 from __future__ import print_function
 

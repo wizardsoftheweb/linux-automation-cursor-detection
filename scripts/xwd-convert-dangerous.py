@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """This file contains code to monitor the desktop environment"""
 from __future__ import print_function
 

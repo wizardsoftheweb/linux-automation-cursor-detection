@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 """This file illustrates using pyautogui to check a pixel's color"""
-
 from __future__ import print_function
+
 import time
 
 import pyautogui
