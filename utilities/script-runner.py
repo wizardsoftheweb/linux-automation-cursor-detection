@@ -1,4 +1,5 @@
 # pylint: disable=misplaced-comparison-constant
+# pylint: disable=too-many-arguments
 """This file runs the provided scripts many times to collect data"""
 from __future__ import print_function
 
@@ -162,46 +163,49 @@ def execute_script(script_name):
 def test_single_script_once(script_name):
     """Tests a single script"""
     LOGGER.debug("Running full promise for %s", script_name)
-    return Promise.all([
-        Promise.resolve(move_mouse_to_random_location()),
-        Promise.resolve(execute_script(script_name)),
-    ]).then(
+    return Promise.resolve(
+        execute_script(script_name)
+    ).then(
         lambda result: Promise.resolve(
             [script_name] + result[1] + [result[0][0], result[0][1]]
         )
     ).then(lambda result: Promise.resolve(write_data(*result)))
 
 
-def fully_test_single_script(script_name, count=0):
-    """Recursively tests a single script"""
-    if 0 == count:
-        return Promise.resolve('finished')
-    LOGGER.info("Calling %s %d more time(s)", script_name, count)
-    count -= 1
-    return Promise.resolve(
-        test_single_script_once(script_name)
-    ).then(
-        lambda result: fully_test_single_script(script_name, count)
-    )
-
-
-def test_all_the_scripts(scripts_to_test):
+def test_group_of_scripts(scripts_to_test):
     """Tests all the provided scripts recursively"""
     if not scripts_to_test:
         return Promise.resolve('finished')
     script_name = scripts_to_test.pop()
-    LOGGER.info("Beginning full test loop for %s", script_name)
     return Promise.resolve(
-        fully_test_single_script(script_name, RUN_COUNT)
+        test_single_script_once(script_name)
     ).then(
-        lambda result: test_all_the_scripts(scripts_to_test)
+        lambda result: test_group_of_scripts(scripts_to_test)
+    )
+
+
+def test_all_the_scripts(scripts_to_test, count=0):
+    """Recursively tests all scripts"""
+    if 0 == count:
+        return Promise.resolve('finished')
+    if not scripts_to_test:
+        return Promise.reject('No scripts')
+    count -= 1
+    return Promise.resolve(
+        move_mouse_to_random_location()
+    ).then(
+        lambda result: Promise.resolve(
+            test_group_of_scripts(scripts_to_test[:])
+        )
+    ).then(
+        lambda result: test_all_the_scripts(scripts_to_test, count)
     )
 
 
 def cli():
     """Main CLI runner"""
     bootstrap().then(
-        lambda result: test_all_the_scripts(SCRIPTS_TO_TEST)
+        lambda result: test_all_the_scripts(SCRIPTS_TO_TEST, RUN_COUNT)
     )
 
 if '__main__' == __name__:
