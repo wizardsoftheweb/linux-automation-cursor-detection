@@ -43,11 +43,10 @@ CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
 LOGGER.addHandler(CONSOLE_HANDLER)
 
 
-def log_test(script_name, run_time, final_x, final_y, finished=unix_time()):
+def write_data(script_name, run_time, final_x, final_y, finished=unix_time()):
     """Log a test row"""
-    # print('Opening log')
+    LOGGER.info('Writing data to file')
     with open(DATA_FILE_NAME, 'a') as log_file:
-        # print('Logging')
         log_writer = writer(
             log_file,
             delimiter=',',
@@ -57,16 +56,17 @@ def log_test(script_name, run_time, final_x, final_y, finished=unix_time()):
         log_writer.writerow(
             [script_name, run_time, final_x, final_y, finished]
         )
-        return Promise.resolve('logged')
-    # print('Logging failed')
-    return Promise.reject('Unable to log')
+        LOGGER.debug('Write successful')
+        return Promise.resolve('written')
+    LOGGER.error('Write failed')
+    return Promise.reject('Unable to write data')
 
 
 def bootstrap():
     """Creates the initial state"""
     seed(DEFAULT_SEED)
     return Promise.resolve(
-        log_test('script_name', 'run_time', 'final_x', 'final_y', 'finished')
+        write_data('script_name', 'run_time', 'final_x', 'final_y', 'finished')
     )
 
 
@@ -131,7 +131,7 @@ def test_single_script_once(script_name):
         lambda result: Promise.resolve(
             [script_name, result[1], result[0][0], result[0][1]]
         )
-    ).then(lambda result: Promise.resolve(log_test(*result)))
+    ).then(lambda result: Promise.resolve(write_data(*result)))
 
 
 def fully_test_single_script(script_name, count=0):
