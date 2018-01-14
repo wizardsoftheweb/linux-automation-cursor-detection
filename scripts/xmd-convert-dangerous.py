@@ -1,4 +1,5 @@
 """This file contains code to monitor the desktop environment"""
+from __future__ import print_function
 
 import subprocess
 import time
@@ -11,7 +12,7 @@ OUTPUT = subprocess.check_output(
     shell=True
 )
 END = time.time()
-print OUTPUT
-print "START: %s" % (START)
-print "End: %s" % (END)
-print "Difference: %s" % (END - START)
+print(OUTPUT)
+print("START: %s" % (START))
+print("End: %s" % (END))
+print("Difference: %s" % (END - START))
