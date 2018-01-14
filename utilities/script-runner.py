@@ -150,7 +150,7 @@ def execute_script(script_name):
             else 'bash'
         )
         LOGGER.debug("%s %s", runner, full_script_path)
-        result = check_output([runner, full_script_path])
+        result = '\n\n' + check_output([runner, full_script_path])
         LOGGER.debug(result)
         return Promise(
             lambda resolve, reject: resolve(parse_out_data(result))
