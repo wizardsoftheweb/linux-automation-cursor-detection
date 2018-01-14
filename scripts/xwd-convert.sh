@@ -7,6 +7,7 @@ eval $(xdotool getmouselocation --shell)
 xwd -root -screen -silent | convert xwd:- -crop "1x1+$X+$Y" txt:- | awk '/^[^#]/{ print gensub("srgb", "RGB: ", "g", $4) }'
 end=$(date +%s%3N)
 
+echo "Mouse: ($X,$Y)"
 echo "Start: $start"
 echo "End: $end"
 echo "Difference: $(($end - $start))"
