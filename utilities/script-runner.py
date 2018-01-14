@@ -106,6 +106,8 @@ FULL_STDOUT_PATTERN = r"""
 ^[\s\S]*?
 RGB:\s+\((?P<rgb>\s*\d+,\s*\d+,\s*\d+)\)
 [\s\S]*?
+Mouse:\s+\((?P<mouse>\s*\d+,\s*\d+\s*)\)
+[\s\S]*?
 Difference:\s+(?P<diff>[\d.]+)
 [\s\S]*?$
 """
@@ -121,9 +123,16 @@ def parse_out_data(haystack):
         LOGGER.debug(possible_result.group('diff'))
         if possible_result.group('rgb'):
             raw_rgb = map(int, possible_result.group('rgb').split(','))
-            return Promise.resolve(
-                [float(possible_result.group('diff'))] + raw_rgb
-            )
+            if possible_result.group('mouse'):
+                mouse_coords = map(
+                    int, possible_result.group('mouse').split(','))
+                return Promise.resolve(
+                    [float(possible_result.group('diff'))]
+                    + raw_rgb
+                    + mouse_coords
+                )
+            LOGGER.error('Parsing failed')
+            return Promise.reject('Mouse not found')
         LOGGER.error('Parsing failed')
         return Promise.reject('RGB not found')
     LOGGER.error('Parsing failed')
@@ -167,7 +176,7 @@ def test_single_script_once(script_name):
         execute_script(script_name)
     ).then(
         lambda result: Promise.resolve(
-            [script_name] + result[1] + [result[0][0], result[0][1]]
+            [script_name] + result
         )
     ).then(lambda result: Promise.resolve(write_data(*result)))
 
