@@ -1,12 +1,6 @@
 {% from 'includes/shell_session.j2' import shell_session %}
 
 {% block lead_paragraph %}
-{# I'm a huge fan of [AutoHotkey](https://autohotkey.com/). It's been an integral part of my computing world since undergrad. Scripting rote activities is both a load off my back and usually way more fun than actually doing the task. Unfortunately, AutoHotkey is built around the Windows ecosystem, so it's not portable.  #}
-
-{# I spent a considerable amount of time last year  #}
-
-{# I was messing around with some automation this weekend and ran into  #}
-
 I've been absolutely thrilled moving my home dev world back to Fedora. I'm not fighting OS ads, virtualization just works, and my settings actually stay the same after updates. I am, however, missing [AutoHotkey](https://autohotkey.com/). It's been an integral part of my computing world since undergrad. I've spent the better part of three years looking for a POSIX AHK clone with no luck.
 
 I've tossed around the idea of starting something similar for some time now. Obviously I don't have the expertise to make anything near as streamlined as AHK, but I do have the muleheadness to spend an entire weekend trying to bum a word or two from an `awk` chain. Tenacity is a useful trait when you have absolutely no idea what you're doing.
@@ -49,7 +43,6 @@ xorg-x11-apps-7.7-18.fc27.x86_64 : X.Org X11 applications
 Repo        : fedora
 Matched from:
 Provide    : xwd = 1.0.6
-
 $ sudo dnf install xorg-x11-apps
 """)
     }}
@@ -306,7 +299,7 @@ $ sudo find /usr -type f -name 'XWDFile.h'
 """)
 }}
 
-However, even knowing that in hindsight, I lost interest in parsing the dumps manually somewhere around the fourth hour of knowing the byte order was wrong but having no idea how to debug it. I learned quite a bit about X11 muddling my way through it, so I was able to refine my research and started getting useful hits. Eventually, I discovered [this SO answer](https://stackoverflow.com/a/17525571/2877698), which gave me the library I needed to track down.
+However, even knowing that in hindsight, I lost interest in parsing the dumps manually somewhere around the fourth hour of knowing the byte order was wrong but having no idea how to debug it. The image at the top of this post shows some of my failed attempts to test and retry. I learned quite a bit about X11 muddling my way through it, so I was able to refine my research and started getting useful hits. Eventually, I discovered [this SO answer](https://stackoverflow.com/a/17525571/2877698), which gave me the library I needed to track down.
 
 [The Python X Library, `python-xlib`,](https://github.com/python-xlib/python-xlib) provides some of the items from Xlib and seems to be the best package at the moment. I neither know enough about X11 nor care to spend the time comparing interfaces to fully grok the differences; many elements covered in the X11 docs ([e.g. `AllPlanes`](https://tronche.com/gui/x/xlib/display/display-macros.html#AllPlanes)) are either missing from `python-xlib` or do not appear to work as the external docs suggest. The library works, I was able to stumble my way through the hand-wavy docs, and, best of all, it blows everything else out of the water.
 
@@ -322,12 +315,25 @@ However, even knowing that in hindsight, I lost interest in parsing the dumps ma
 {{
     shell_session("""\
 $ python scripts/xlib-color.py
-#2d252a252e25
-Start: 1515937930.86
-End: 1515937930.86
-Difference: 0.00135087966919
+e3fb6e6d2e25
+Start: 1515954353.75
+End: 1515954353.75
+Difference: 0.000375986099243
 """)
 }}
 
+So far, it looks like this script can consistently poll cursor colors in fewer than five milliseconds. Everything else takes at least 250 milliseconds. Depending on how fast and loose you want to play with the numbers, this solution is at least a 97.5% reduction (200 to 5) and optimistically closer to a 99.<span style="text-decoration: overline">6</span>% reduction (300 to 1).
+
+### Caveats
+
+I'm sort of waving my hands at a few things here because I still don't fully understand them yet.
+
+* I do not understand the bitmap side of things, [i.e. `XYPixmap`s](https://stackoverflow.com/a/32244336/2877698). I don't feel all that good about [`ZPixmap`s either](https://lists.freedesktop.org/archives/xorg/2017-August/058896.html) but they're at least composed of RGB triplets which is something I do get.
+* Speaking of `ZPixmap`s, I had quite a bit of trouble with `plane_mask`s as well. They're used [to hide unwanted bit planes](https://tronche.com/gui/x/xlib/GC/manipulating.html), which I just realized writing this sentence isn't anything more special than masking bits. That being said, it's not documented well in X11 and at all in `python-xlib`.
+* The pixels in `ZPixmap`s return strange data structures. This is 100% my inexperience with Python and its advanced data types. I will eventually break down the code and figure out what it's doing.
+
+Also, `python-xlib` is really awesome. I've made some comments that could be taken as passive aggressive stabs at the devs, and I want to make sure that misconception is cleared up. They've built some amazing software, they're working hard to make the world a better place, and I'm stoked about their contributions.
+
+I'm going to follow this up with another post or two playing with this stuff, doing some analysis, and trying out some implementations.
 {% endblock %}
 
