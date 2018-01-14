@@ -1,4 +1,6 @@
 """This file demonstrates color snooping with Xlib"""
+from __future__ import print_function
+
 from os import getenv
 import time
 
@@ -42,10 +44,10 @@ def get_color(event):
             raw_color.blue
         )
     end = time.time()
-    print '#%04x%04x%04x' % (final[0], final[1], final[2])
-    print "Start: %s" % (start)
-    print "End: %s" % (end)
-    print "Difference: %s" % (end - start)
+    print('#%04x%04x%04x' % (final[0], final[1], final[2]))
+    print("Start: %s" % (start))
+    print("End: %s" % (end))
+    print("Difference: %s" % (end - start))
 
 # This is a simplified version of the xinput example
 # https://github.com/python-xlib/python-xlib/blob/b73b17d6d3f0d30da36490d3b59bc2a98309f2a6/examples/xinput.py#L59
