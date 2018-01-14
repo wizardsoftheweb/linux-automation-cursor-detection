@@ -18,7 +18,7 @@ from promise import Promise
 import pyautogui
 
 DEFAULT_SEED = 47
-RUN_COUNT = 2
+RUN_COUNT = 200
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
 LOCATION = dirname(__file__)
 SCRIPTS_PATH = join(LOCATION, '..', 'scripts')
@@ -45,7 +45,7 @@ LOGGER.addHandler(CONSOLE_HANDLER)
 LOGGER.setLevel(logging.DEBUG)
 
 
-def write_data(script_name, run_time, red, green, blue, final_x, final_y, finished=None):
+def write_data(script_name, run_time, red, green, blue, x_coordinate, y_coordinate, finished=None):
     """Log a test row"""
     LOGGER.info('Writing data to file')
     with open(DATA_FILE_NAME, 'a') as log_file:
@@ -58,7 +58,16 @@ def write_data(script_name, run_time, red, green, blue, final_x, final_y, finish
         if finished is None:
             finished = unix_time()
         log_writer.writerow(
-            [script_name, run_time, red, green, blue, final_x, final_y, finished]
+            [
+                script_name,
+                run_time,
+                red,
+                green,
+                blue,
+                x_coordinate,
+                y_coordinate,
+                finished
+            ]
         )
         LOGGER.debug('Write successful')
         return Promise.resolve('written')
@@ -79,8 +88,8 @@ def bootstrap():
                 'red',
                 'green',
                 'blue',
-                'final_x',
-                'final_y',
+                'x_coordinate',
+                'y_coordinate',
                 'finished'
             )
         )
