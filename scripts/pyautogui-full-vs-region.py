@@ -1,4 +1,4 @@
-"""This file illustrates using pyautogui to check a pixel's color"""
+"""This file illustrates the similar run time between regions and full screenshots"""
 
 from __future__ import print_function
 import time
