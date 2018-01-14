@@ -197,7 +197,7 @@ Luckily I stumbled into `xwd` via [a wonderfully succinct `bash` solution](https
 {{
     shell_session("""\
 $ scripts/xwd-convert.sh
-# ImageMagick pixel enumeration: 1,1,65535,srgb
+ImageMagick pixel enumeration: 1,1,65535,srgb
 0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
 Start: 1515922099742
 End: 1515922100086
@@ -228,7 +228,7 @@ Y=1551
 SCREEN=0
 WINDOW=48234503
 
-# ImageMagick pixel enumeration: 1,1,65535,srgb
+ImageMagick pixel enumeration: 1,1,65535,srgb
 0,0: (9766,35723,53970)  #268BD2  srgb(38,139,210)
 
 Start: 1515923808.71
@@ -257,7 +257,7 @@ I spent at least an hour trying to figure out how to multiplex stdin on the file
 {{
     shell_session("""\
 $ python scripts/xwd-convert-chained.py
-# ImageMagick pixel enumeration: 1,1,65535,srgb
+ImageMagick pixel enumeration: 1,1,65535,srgb
 0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
 
 Start: 1515929723.34
@@ -284,7 +284,7 @@ It's still absysmally slow. We haven't actually changed how we're getting the du
 {{
     shell_session("""\
 $ python scripts/xwd-convert-dangerous.py
-# ImageMagick pixel enumeration: 1,1,65535,srgb
+ImageMagick pixel enumeration: 1,1,65535,srgb
 0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
 
 START: 1515930641.2
