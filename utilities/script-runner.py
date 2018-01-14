@@ -145,12 +145,12 @@ def execute_script(script_name):
     full_script_path = join(SCRIPTS_PATH, script_name)
     if isfile(full_script_path):
         runner = (
-            ['python']
+            'python'
             if '.py' == extension[1]
-            else ['bash']
+            else 'bash'
         )
         LOGGER.debug("%s %s", runner, full_script_path)
-        result = check_output(runner + [full_script_path])
+        result = check_output([runner, full_script_path])
         LOGGER.debug(result)
         return Promise(
             lambda resolve, reject: resolve(parse_out_data(result))
