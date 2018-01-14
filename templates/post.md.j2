@@ -22,5 +22,49 @@ Several months ago I began drafting a project along these lines. I think [RobotJ
 
 However, Electron is a Chromium wrapper. It's got a ton of bloat and the whole Chromium thing to worry about. I typically hit my macros pretty hard, so an app that has to juggle many intensive GUI actions while being an intensive GUI might not be the best. (Note: I didn't actually pursue this, so I could be totally wrong and Electron might be faster.) I decided to mess around with a few other ideas this weekend.
 
-{% endblock %}
+## Software
 
+I mention this software during this post. I install everything here, but I remove some of it later. YMMV. If you're in the Debian ecosystem, this should work but the packages will probably have completely different names.
+
+* [`xdotool` and its dependencies](http://www.semicomplete.com/projects/xdotool/)
+    {{
+        shell_session("$ sudo dnf install xdotool")
+    }}
+* [ImageMagick](https://www.imagemagick.org/script/download.php)
+    {{
+        shell_session("$ sudo dnf install ImageMagick")
+    }}
+* `xwd`: You might have to hunt for this executable's provider.
+    {{
+        shell_session("""\
+$ dnf provides xwd
+Last metadata expiration check: 0:10:01 ago on Sun 14 Jan 2018 06:28:40 AM UTC.
+xorg-x11-apps-7.7-18.fc27.x86_64 : X.Org X11 applications
+Repo        : fedora
+Matched from:
+Provide    : xwd = 1.0.6
+
+$ sudo dnf install xorg-x11-apps
+""")
+    }}
+* Depending on your Python setup, you might already have these external dependencies.
+
+    {{
+        shell_session("""\
+$ sudo dnf install  \
+        python{2,3}-{tkinter,xlib} \
+        scrot
+""")
+    }}
+
+* Finally, for good measure, check the `pip` dependencies:
+
+    {{
+        shell_session("""\
+$ pip install --user  \
+        pyautogui \
+        Xlib
+""")
+    }}
+
+{% endblock %}
