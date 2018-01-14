@@ -45,6 +45,7 @@ for raw_color in RESULTS:
         raw_color.blue
     )
 print("RGB: (%d,%d,%d)" % (final[0] / 256, final[1] / 256, final[2] / 256))
+print("Mouse: (%d,%d)" % (COORDS.root_x, COORDS.root_y))
 END = time.time()
 print("Start: %s" % (START))
 print("End: %s" % (END))
