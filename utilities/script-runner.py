@@ -5,7 +5,7 @@ from __future__ import print_function
 from csv import writer, QUOTE_NONNUMERIC
 from os.path import dirname, isfile, join, splitext
 from random import randrange, seed
-from re import search, MULTILINE
+from re import compile as re_compile, MULTILINE, search, VERBOSE
 from subprocess import check_output
 from sys import exit as sys_exit, stderr
 from time import sleep, time as unix_time
@@ -17,7 +17,7 @@ from promise import Promise
 import pyautogui
 
 DEFAULT_SEED = 47
-RUN_COUNT = 200
+RUN_COUNT = 2
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
 LOCATION = dirname(__file__)
 SCRIPTS_PATH = join(LOCATION, '..', 'scripts')
@@ -41,9 +41,10 @@ CONSOLE_FORMATTER = logging.Formatter(
 )
 CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
 LOGGER.addHandler(CONSOLE_HANDLER)
+LOGGER.setLevel(logging.DEBUG)
 
 
-def write_data(script_name, run_time, final_x, final_y, finished=None):
+def write_data(script_name, run_time, red, green, blue, final_x, final_y, finished=None):
     """Log a test row"""
     LOGGER.info('Writing data to file')
     with open(DATA_FILE_NAME, 'a') as log_file:
@@ -56,7 +57,7 @@ def write_data(script_name, run_time, final_x, final_y, finished=None):
         if finished is None:
             finished = unix_time()
         log_writer.writerow(
-            [script_name, run_time, final_x, final_y, finished]
+            [script_name, run_time, red, green, blue, final_x, final_y, finished]
         )
         LOGGER.debug('Write successful')
         return Promise.resolve('written')
@@ -74,6 +75,9 @@ def bootstrap():
             write_data(
                 'script_name',
                 'run_time',
+                'red',
+                'green',
+                'blue',
                 'final_x',
                 'final_y',
                 'finished'
@@ -90,26 +94,38 @@ def get_random_point():
 
 def move_mouse_to_random_location(delay=0):
     """Moves the mouse to a new location after a possible delay"""
-    # print("Sleeping mouse movement %ds" % (delay))
+    LOGGER.info("Sleeping mouse movement for %ds", delay)
     sleep(delay)
-    # print('Moving mouse')
+    LOGGER.debug('Moving mouse')
     x_coordinate, y_coordinate = get_random_point()
     pyautogui.moveTo(x_coordinate, y_coordinate)
     return Promise.resolve((x_coordinate, y_coordinate))
 
+FULL_STDOUT_PATTERN = r"""
+^[\s\S]*?
+RGB:\s+\((?P<rgb>\s*\d+,\s*\d+,\s*\d+)\)
+[\s\S]*?
+Difference:\s+(?P<diff>[\d.]+)
+[\s\S]*?$
+"""
 
-def parse_difference(haystack):
+COMPILED_STDOUT_PATTERN = re_compile(FULL_STDOUT_PATTERN, VERBOSE | MULTILINE)
+
+
+def parse_out_data(haystack):
     """Finds the result from stdout"""
-    possible_result = search(
-        r'^Difference:\s+(?P<diff>[\d.]+).*?$',
-        haystack,
-        MULTILINE
-    )
-    # print(possible_result.group('diff'))
+    LOGGER.info('Parsing stdout')
+    possible_result = search(COMPILED_STDOUT_PATTERN, haystack)
     if possible_result.group('diff'):
-        # print('Returning results')
-        return Promise.resolve(possible_result.group('diff'))
-    # print('Difference failed')
+        LOGGER.debug(possible_result.group('diff'))
+        if possible_result.group('rgb'):
+            raw_rgb = map(int, possible_result.group('rgb').split(','))
+            return Promise.resolve(
+                [float(possible_result.group('diff'))] + raw_rgb
+            )
+        LOGGER.error('Parsing failed')
+        return Promise.reject('RGB not found')
+    LOGGER.error('Parsing failed')
     return Promise.reject('Difference not found')
 
 
@@ -123,35 +139,44 @@ def execute_script(script_name):
             if '.py' == extension[1]
             else ['bash']
         )
-        # print(full_script_path)
+        LOGGER.debug("%s %s", runner, full_script_path)
         result = check_output(runner + [full_script_path])
+        LOGGER.debug(result)
         return Promise(
-            lambda resolve, reject: resolve(parse_difference(result))
+            lambda resolve, reject: resolve(parse_out_data(result))
         ).then(
             lambda result: Promise.resolve(
-                float(result) * (1000 if extension[1] == '.py' else 1)
+                [
+                    result[0] * (
+                        1000
+                        if extension[1] == '.py'
+                        else 1
+                    )
+                ] + result[1:]
             )
         )
+    LOGGER.error("%s failed", script_name)
     return Promise.reject("%s failed" % (script_name))
 
 
 def test_single_script_once(script_name):
     """Tests a single script"""
+    LOGGER.debug("Running full promise for %s", script_name)
     return Promise.all([
         Promise.resolve(move_mouse_to_random_location()),
         Promise.resolve(execute_script(script_name)),
     ]).then(
         lambda result: Promise.resolve(
-            [script_name, result[1], result[0][0], result[0][1]]
+            [script_name] + result[1] + [result[0][0], result[0][1]]
         )
     ).then(lambda result: Promise.resolve(write_data(*result)))
 
 
 def fully_test_single_script(script_name, count=0):
     """Recursively tests a single script"""
-    # print('Calling %s %d time(s)' % (script_name, count))
     if 0 == count:
         return Promise.resolve('finished')
+    LOGGER.info("Calling %s %d more time(s)", script_name, count)
     count -= 1
     return Promise.resolve(
         test_single_script_once(script_name)
@@ -165,6 +190,7 @@ def test_all_the_scripts(scripts_to_test):
     if not scripts_to_test:
         return Promise.resolve('finished')
     script_name = scripts_to_test.pop()
+    LOGGER.info("Beginning full test loop for %s", script_name)
     return Promise.resolve(
         fully_test_single_script(script_name, RUN_COUNT)
     ).then(
@@ -179,4 +205,5 @@ def cli():
     )
 
 if '__main__' == __name__:
+    LOGGER.info("CLI assumed")
     sys_exit(cli())
