@@ -1,4 +1,5 @@
 """This file runs several commands without allowing them to communicate directly`"""
+from __future__ import print_function
 
 import re
 import subprocess
@@ -38,8 +39,8 @@ IMAGE = subprocess.check_output([
 ])
 END = time.time()
 
-print COORD
-print IMAGE
-print "Start: %s" % (START)
-print "End: %s" % (END)
-print "Difference: %s" % (END - START)
+print(COORD)
+print(IMAGE)
+print("Start: %s" % (START))
+print("End: %s" % (END))
+print("Difference: %s" % (END - START))
