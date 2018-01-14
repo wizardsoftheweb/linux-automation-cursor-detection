@@ -26,32 +26,6 @@ def highlight_block(content, **kwargs):
     return blob.highlighted_blob
 
 
-def run_bash(command_as_tuple):
-    """Runs the given command via check_output and returns its results"""
-    output = ('$ %s\n' % (' '.join(command_as_tuple))).encode('utf-8')
-    return ('%s%s' % (output, check_output(command_as_tuple))).decode('utf-8')
-
-
-def include_with_default(current_tag, relative_path, language):
-    """Includes the specified file from the given reference. Defaults to local
-    version when not found."""
-    language = language or path.splitext(path.basename(relative_path))[
-        1].replace('.', '')
-    new_include = "```%(language)s\n" % locals()
-    new_include = new_include.replace('```yml', '```yaml')
-    try:
-        loaded_contents = check_output(
-            ['git', 'show', current_tag + ':' + relative_path],
-            stderr=open(devnull, 'w')
-        )
-    except CalledProcessError:
-        with file(path.join(ROOT_DIR, relative_path), 'r') as file_to_include:
-            loaded_contents = file_to_include.read()
-    new_include += "%s\n" % (loaded_contents)
-    new_include += '```\n'
-    return new_include.decode('utf-8')
-
-
 def link_header(matched_line, used_headlines):
     """Creates a Markdown TOC link"""
     headline = matched_line.group(2)
@@ -130,9 +104,7 @@ def compile_all_posts():
     )
 
     jinja_env.globals['highlight_block'] = highlight_block
-    jinja_env.globals['include_with_default'] = include_with_default
     jinja_env.globals['num2words'] = num2words
-    jinja_env.globals['run_bash'] = run_bash
     jinja_env.globals['join'] = path.join
 
     for post_filename in glob(path.join(TEMPLATE_DIR, 'post*.j2')):
