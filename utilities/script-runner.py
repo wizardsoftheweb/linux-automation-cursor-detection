@@ -2,13 +2,15 @@
 """This file runs the provided scripts many times to collect data"""
 from __future__ import print_function
 
-import csv
+from csv import writer, QUOTE_NONNUMERIC
 from os.path import dirname, isfile, join, splitext
 from random import randrange, seed
 from re import search, MULTILINE
 from subprocess import check_output
-from sys import exit as sys_exit
+from sys import exit as sys_exit, stderr
 from time import sleep, time as unix_time
+
+import logging
 
 from promise import Promise
 
@@ -32,17 +34,25 @@ DATA_FILE_NAME = join(
     'run_time_comparison.csv',
 )
 
+LOGGER = logging.getLogger('script-runner')
+CONSOLE_HANDLER = logging.StreamHandler(stream=stderr)
+CONSOLE_FORMATTER = logging.Formatter(
+    '[%(asctime)s][%(name)s][%(levelname)s] %(message)s'
+)
+CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
+LOGGER.addHandler(CONSOLE_HANDLER)
+
 
 def log_test(script_name, run_time, final_x, final_y, finished=unix_time()):
     """Log a test row"""
     # print('Opening log')
     with open(DATA_FILE_NAME, 'a') as log_file:
         # print('Logging')
-        log_writer = csv.writer(
+        log_writer = writer(
             log_file,
             delimiter=',',
             quotechar='"',
-            quoting=csv.QUOTE_NONNUMERIC
+            quoting=QUOTE_NONNUMERIC
         )
         log_writer.writerow(
             [script_name, run_time, final_x, final_y, finished]
