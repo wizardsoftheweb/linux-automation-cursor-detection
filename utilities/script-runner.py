@@ -99,15 +99,15 @@ def bootstrap():
 def get_random_point():
     """Returns a random coordinate on the screen"""
     LOGGER.debug('Creating random point')
-    return randrange(0, SCREEN_WIDTH), randrange(0, SCREEN_HEIGHT)
+    return randrange(0, SCREEN_WIDTH), randrange(400, 1400)
 
 
 def move_mouse_to_random_location(delay=0):
     """Moves the mouse to a new location after a possible delay"""
     LOGGER.info("Sleeping mouse movement for %ds", delay)
     sleep(delay)
-    LOGGER.debug('Moving mouse')
     x_coordinate, y_coordinate = get_random_point()
+    LOGGER.debug("Moving mouse to (%d,%d)", x_coordinate, y_coordinate)
     pyautogui.moveTo(x_coordinate, y_coordinate)
     return Promise.resolve((x_coordinate, y_coordinate))
 
