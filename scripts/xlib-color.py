@@ -47,6 +47,10 @@ def get_color(event):
     print "End: %s" % (end)
     print "Difference: %s" % (end - start)
 
+# This is a simplified version of the xinput example
+# https://github.com/python-xlib/python-xlib/blob/b73b17d6d3f0d30da36490d3b59bc2a98309f2a6/examples/xinput.py#L59
+# The most recent version may or may not match line numbers
+# https://github.com/python-xlib/python-xlib/blob/master/examples/xinput.py#L59
 try:
     # Ensure we can run this
     EXTENSION_INFO = DISPLAY.query_extension('XInputExtension')
