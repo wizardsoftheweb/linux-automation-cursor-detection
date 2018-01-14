@@ -201,5 +201,37 @@ Difference: 344
 
 That's even slower than `pyautogui`. To be fair, we should probably build it in Python.
 
+### Disconnected and Secure
+
+In order to convert it to Python, we'll have to break the pipes. [Shell injection](https://en.wikipedia.org/wiki/Code_injection#Shell_injection) is no joke.
+
+{{
+    highlight_block(
+        join('scripts', 'xmd-convert-disconnected.py'),
+        blob_path=join('scripts', 'xmd-convert-disconnected.py'),
+        explicit_lexer_name = 'PythonLexer',
+        title = 'xmd-convert-disconnected.py'
+    )
+}}
+
+{{
+    shell_session("""\
+$ python scripts/xmd-convert-disconnected.py
+X=2291
+Y=1551
+SCREEN=0
+WINDOW=48234503
+
+&num; ImageMagick pixel enumeration: 1,1,65535,srgb
+0,0: (9766,35723,53970)  #268BD2  srgb(38,139,210)
+
+Start: 1515923808.71
+End: 1515923809.05
+Difference: 0.338629961014
+""")
+}}
+
+However, that didn't seem to give us any extra time. Chaining the commands might work in our favor here.
+
 {% endblock %}
 
