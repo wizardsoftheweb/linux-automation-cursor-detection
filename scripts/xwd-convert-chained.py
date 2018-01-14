@@ -1,4 +1,6 @@
 """This file runs several commands by linking stdout and stdin in subprocesses"""
+from __future__ import print_function
+
 import re
 import subprocess
 import time
@@ -44,7 +46,7 @@ OUTPUT = IMAGE.communicate()[0]
 DUMP.wait()
 END = time.time()
 
-print OUTPUT
-print "Start: %s" % (START)
-print "End: %s" % (END)
-print "Difference: %s" % (END - START)
+print(OUTPUT)
+print("Start: %s" % (START))
+print("End: %s" % (END))
+print("Difference: %s" % (END - START))
