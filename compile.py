@@ -73,7 +73,7 @@ def render_single_post(post_basename, jinja_to_use):
     """Renders a specific post file with the provided environment"""
     template = jinja_to_use.get_template(post_basename)
     pre_toc = template.render(
-        post_number=int(post_basename.split('-')[1]),
+        # post_number=int(post_basename.split('-')[1]),
         current_tag=path.splitext(post_basename)[0].replace('.md', '')
     )
     return pre_toc.strip().encode('utf-8')
@@ -133,8 +133,9 @@ def compile_all_posts():
     jinja_env.globals['include_with_default'] = include_with_default
     jinja_env.globals['num2words'] = num2words
     jinja_env.globals['run_bash'] = run_bash
+    jinja_env.globals['join'] = path.join
 
-    for post_filename in glob(path.join(TEMPLATE_DIR, 'post-*.j2')):
+    for post_filename in glob(path.join(TEMPLATE_DIR, 'post*.j2')):
         fully_compile_single_post(post_filename, jinja_env)
 
 compile_all_posts()
