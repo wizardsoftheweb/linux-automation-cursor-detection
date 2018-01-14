@@ -91,6 +91,85 @@ $ eval $(xdotool getmouselocation --shell); echo $X
 
 The only downside is trying to consume this. It might be a better idea to try native options.
 
+## `pyautogui`
+
+`pyautogui` is one of those native options. Al Sweigart wrote [a great little intro](https://automatetheboringstuff.com/chapter18/) that I highly recommend reading. The tool is simple and fast, which is what we're looking for.
+
+{{
+    highlight_block(
+        join('scripts', 'pyautogui-geometry.py'),
+        blob_path=join('scripts', 'pyautogui-geometry.py'),
+        explicit_lexer_name = 'PythonLexer',
+        title = 'pyautogui-geometry.py'
+    )
+}}
+
+{{
+    shell_session("""\
+$ python scripts/pyautogui-geometry.py
+Screen: 3000x1920
+Mouse: (2570,1597)
+Start: 1515917871.17
+End: 1515917871.17
+Difference: 0.000105142593384
+""")
+}}
+
+The geometry is blazing fast and super simple. `pyautogui` can also work with the screen and detect images and colors. Detecting color under the cursor is a great way to trigger actions, especially in routine applications.
+
+{{
+    highlight_block(
+        join('scripts', 'pyautogui-pixel-color.py'),
+        blob_path=join('scripts', 'pyautogui-pixel-color.py'),
+        explicit_lexer_name = 'PythonLexer',
+        title = 'pyautogui-pixel-color.py'
+    )
+}}
+
+{{
+    shell_session("""\
+$ python scripts/pyautogui-pixel-color.py
+Screen: 3000x1920
+Mouse: (2731,1766)
+RGB: (20, 21, 22)
+Start: 1515918345.91
+End: 1515918346.19
+Difference: 0.282289028168
+""")
+}}
+
+Unfortunately, `pyautogui` is super slow. No matter what, it screenshots everything, then returns what you requested.
+
+{{
+    highlight_block(
+        join('scripts', 'pyautogui-full-vs-region.py'),
+        blob_path=join('scripts', 'pyautogui-full-vs-region.py'),
+        explicit_lexer_name = 'PythonLexer',
+        title = 'pyautogui-pixel-color.py'
+    )
+}}
+
+{{
+    shell_session("""\
+$ python scripts/pyautogui-full-vs-region.py
+Using a region
+Screen: 3000x1920
+Mouse: (2416,1456)
+RGB: (20, 21, 22)
+Start: 1515919266.8
+End: 1515919267.09
+Difference: 0.286885023117
+==========
+Full screen
+Screen: 3000x1920
+Mouse: (2416,1456)
+Start: 1515919267.09
+End: 1515919267.37
+Difference: 0.281718969345
+""")
+}}
+
+Smaller screens will do better; [the docs mention this](https://pyautogui.readthedocs.io/en/latest/screenshot.html#the-screenshot-function). I was able to cut my time by disabling my second screen. That's neither fun nor practical, so I put `pyautogui` aside for now.
 
 
 {% endblock %}
