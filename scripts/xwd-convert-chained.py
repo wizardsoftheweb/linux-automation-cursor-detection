@@ -17,7 +17,7 @@ Y=(?P<y>\d+)        # Name y for easy access
 COMPILED_XDO_PATTERN = re.compile(FULL_XDO_PATTERN, re.VERBOSE | re.MULTILINE)
 
 FULL_RGB_PATTERN = r"""
-^[\s\S]*
+^[\s\S]*?
 srgb(?P<rgb>
 \(\s*
 \d+,\s*
