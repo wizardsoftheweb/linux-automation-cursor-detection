@@ -16,20 +16,244 @@ You can find everything here [in the repo](https://github.com/wizardsoftheweb/li
 
 To get some data, I had to revamp most of the scripts from the first post. I made sure all of them exported these things:
 
-* RGB triplet: `pyautogui` seems [to limit its output](https://pyautogui.readthedocs.io/en/latest/screenshot.html#pixel-matching), so I reduced everything down to the `0` to `255` range
+* RGB triplet: `pyautogui` seems [to limit its output](https://pyautogui.readthedocs.io/en/latest/screenshot.html#pixel-matching), so I reduced everything down to `[0,255]`
 * Mouse position: I wanted to use this for color comparisons, which hasn't happened yet
 * Action run time: This previously included setup and pixel hunting; it now also includes RGB and mouse parsing
 
-After a fair amount of trial-and-error (X11 apparently gets cranky at some of the abrupt switches I was attempting), I finally settled on this approach:
+After a fair amount of trial-and-error (X11 apparently gets cranky at some of the abrupt switches I was attempting), I finally settled on [this approach](https://github.com/wizardsoftheweb/linux-automation-cursor-detection/blob/master/utilities/script-runner.py) using promises and subprocesses.
+
+The runner creates a bunch of random points, then, for each script, moves the cursor to each point and captures data. It's untested right now (I'm sorry 🙃) but I did run it many, many times on my machine.
+
+## Raw Data
+
+I did a quick run of 100 points (so 400 total data points) this afternoon. Rather than try to get a good table script up and running on my blog, I'm going to leave the data in GitHub. Check out [the full CSV](https://github.com/wizardsoftheweb/linux-automation-cursor-detection/blob/master/data/run_time_comparison.csv) to see everything.
+
+## Munging Setup
+
+I threw everything in [RStudio](https://www.rstudio.com/) because I don't know what else to look for or use (yet). Stick with what you know, right? I'm going to run mean and median as well as create [violin plots](https://en.wikipedia.org/wiki/Violin_plot). You can skim [the whole thing at once](https://github.com/wizardsoftheweb/linux-automation-cursor-detection/blob/master/utilities/process-run_time_comparison.R) or follow along below.
 
 {{
-    highlight_block(
-        join('utilities', 'script-runner.py'),
-        blob_path=join('utilities', 'script-runner.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'script-runner.py'
-    )
+    shell_session("""\
+> library(readr)
+> library(vioplot)
+> library(dplyr)
+> run_time_comparison <- read_csv(\"../data/run_time_comparison.csv\")
+Parsed with column specification:
+cols(
+  script_name = col_character(),
+  run_time = col_double(),
+  red = col_integer(),
+  green = col_integer(),
+  blue = col_integer(),
+  x_coordinate = col_integer(),
+  y_coordinate = col_integer(),
+  finished = col_double()
+)
+""")
 }}
+
+## `pyautogui-pixel-color.py`
+
+{{
+    shell_session("""\
+> pyautogui_pixel_color_py = dplyr::filter(run_time_comparison,
+#                                          script_name == \"pyautogui-pixel-color.py\")
+> mean(pyautogui_pixel_color_py$run_time)
+[1] 280.9725
+> median(pyautogui_pixel_color_py$run_time)
+[1] 280.2196
+> png(
+#   filename = \"../output/violin-pyautogui-pixel-color.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   pyautogui_pixel_color_py$run_time,
+#   names = c(\"pyautogui-pixel-color.py\"),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
+""")
+}}
+
+![violin-pyautogui-pixel-color](/content/images/2018/01/violin-pyautogui-pixel-color.png)
+
+## `xlib-color.py`
+
+{{
+    shell_session("""\
+> xlib_color_py = dplyr::filter(run_time_comparison, script_name == \"xlib-color.py\")
+> mean(xlib_color_py$run_time)
+[1] 0.396111
+> median(xlib_color_py$run_time)
+[1] 0.3905296
+> png(
+#   filename = \"../output/violin-xlib-color.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(xlib_color_py$run_time,
+#         names = c(\"xlib-color.py\"),
+#         col = \"deepskyblue2\")
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
+""")
+}}
+
+![violin-xlib-color](/content/images/2018/01/violin-xlib-color.png)
+
+## `xwd-convert-chained.py`
+
+{{
+    shell_session("""\
+> xwd_convert_chained_py = dplyr::filter(run_time_comparison, script_name == \"xwd-convert-chained.py\")
+> mean(xwd_convert_chained_py$run_time)
+[1] 220.0624
+> median(xwd_convert_chained_py$run_time)
+[1] 219.6156
+> png(
+#   filename = \"../output/violin-xwd-convert-chained.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   xwd_convert_chained_py$run_time,
+#   names = c(\"xwd-convert-chained.py\"),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
+""")
+}}
+
+![violin-xwd-convert-chained](/content/images/2018/01/violin-xwd-convert-chained.png)
+
+## `xwd-convert.sh`
+
+{{
+    shell_session("""\
+> xwd_convert_sh = dplyr::filter(run_time_comparison, script_name == \"xwd-convert.sh\")
+> mean(xwd_convert_sh$run_time)
+[1] 236.21
+> median(xwd_convert_sh$run_time)
+[1] 242
+> png(
+#   filename = \"../output/violin-xwd-convert.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(xwd_convert_sh$run_time,
+#         names = c(\"xwd-convert.sh\"),
+#         col = \"deepskyblue2\")
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
+""")
+}}
+
+![violin-xwd-convert](/content/images/2018/01/violin-xwd-convert.png)
+
+## All Together
+
+Because of `xlib-color.py`, this graph isn't terribly useful. There's too much range.
+
+{{
+    shell_session("""\
+> png(
+#   filename = \"../output/violin-all.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   pyautogui_pixel_color_py$run_time,
+#   xlib_color_py$run_time,
+#   xwd_convert_chained_py$run_time,
+#   xwd_convert_sh$run_time,
+#   names = c(
+#     \"pyautogui-pixel-color.py\",
+#     \"xlib-color.py\",
+#     \"xwd-convert-chained.py\",
+#     \"xwd-convert.sh\"
+#   ),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
+""")
+}}
+
+![violin-all](/content/images/2018/01/violin-all.png)
+
+## Slow Only
+
+This is one is a bit better. Unfortunately, it does a good job of highlighting how slow `pyautogui` can be.
+
+{{
+    shell_session("""\
+> png(
+#   filename = \"../output/violin-slow.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   pyautogui_pixel_color_py$run_time,
+#   xwd_convert_chained_py$run_time,
+#   xwd_convert_sh$run_time,
+#   names = c(
+#     \"pyautogui-pixel-color.py\",
+#     \"xwd-convert-chained.py\",
+#     \"xwd-convert.sh\"
+#   ),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
+""")
+}}
+
+![violin-slow](/content/images/2018/01/violin-slow.png)
+
+## Conclusions
+
+* `python-xlib` is scary fast. That's so awesome.
+* `pyautogui` is slower than I thought. It does seem to maintain a "fairly stable slow, pace, though, in comparison to the others."
+* Chaining commands via Python is actually, on average, faster than running things through `bash`. I don't know if that's because of the additional `awk` processing on the tail end of `xwd-convert.sh` or something else. It bears some investigation.
 
 {% endblock %}
 
