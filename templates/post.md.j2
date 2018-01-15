@@ -12,5 +12,24 @@ This is a quick follow-up to [an earlier post today](https://blog.wizardsofthewe
 
 You can find everything here [in the repo](https://github.com/wizardsoftheweb/linux-automation-cursor-detection).
 
+## Script Runner
+
+To get some data, I had to revamp most of the scripts from the first post. I made sure all of them exported these things:
+
+* RGB triplet: `pyautogui` seems [to limit its output](https://pyautogui.readthedocs.io/en/latest/screenshot.html#pixel-matching), so I reduced everything down to the `0` to `255` range
+* Mouse position: I wanted to use this for color comparisons, which hasn't happened yet
+* Action run time: This previously included setup and pixel hunting; it now also includes RGB and mouse parsing
+
+After a fair amount of trial-and-error (X11 apparently gets cranky at some of the abrupt switches I was attempting), I finally settled on this approach:
+
+{{
+    highlight_block(
+        join('utilities', 'script-runner.py'),
+        blob_path=join('utilities', 'script-runner.py'),
+        explicit_lexer_name = 'PythonLexer',
+        title = 'script-runner.py'
+    )
+}}
+
 {% endblock %}
 
