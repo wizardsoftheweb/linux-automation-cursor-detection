@@ -17,12 +17,18 @@ from promise import Promise
 
 import pyautogui
 
+# Easy defaults
 DEFAULT_SEED = 47
 RUN_COUNT = 100
-SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
-LOCATION = dirname(__file__)
-SCRIPTS_PATH = join(LOCATION, '..', 'scripts')
 
+# Start with proper screen info
+SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
+
+# Directory info
+LOCATION = dirname(__file__)
+
+# Scripts to hit and their location
+SCRIPTS_PATH = join(LOCATION, '..', 'scripts')
 SCRIPTS_TO_TEST = [
     'pyautogui-pixel-color.py',
     'xlib-color.py',
@@ -30,11 +36,13 @@ SCRIPTS_TO_TEST = [
     'xwd-convert.sh',
 ]
 
+# Main CSV output
 DATA_FILE_NAME = join(
     'data',
     'run_time_comparison.csv',
 )
 
+# Attach a logger
 LOGGER = logging.getLogger('script-runner')
 CONSOLE_HANDLER = logging.StreamHandler(stream=stderr)
 CONSOLE_FORMATTER = logging.Formatter(
@@ -42,13 +50,15 @@ CONSOLE_FORMATTER = logging.Formatter(
 )
 CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
 LOGGER.addHandler(CONSOLE_HANDLER)
+# I haven't wanted to argparser yet, so this logs everything
 LOGGER.setLevel(logging.DEBUG)
 
+# Create an empty list to hold the points we'll hit
 POINTS = list()
 
 
 def write_data(script_name, run_time, red, green, blue, x_coordinate, y_coordinate, finished=None):
-    """Log a test row"""
+    """Given a row data, writes it to the main CSV"""
     LOGGER.info('Writing data to file')
     with open(DATA_FILE_NAME, 'a') as log_file:
         log_writer = writer(
@@ -57,6 +67,7 @@ def write_data(script_name, run_time, red, green, blue, x_coordinate, y_coordina
             quotechar='"',
             quoting=QUOTE_NONNUMERIC
         )
+        # Attach a final timestamp if not already there
         if finished is None:
             finished = unix_time()
         log_writer.writerow(
@@ -78,10 +89,12 @@ def write_data(script_name, run_time, red, green, blue, x_coordinate, y_coordina
 
 
 def bootstrap():
-    """Creates the initial state"""
+    """Creates the initial application state"""
     LOGGER.debug('Seeding random')
     seed(DEFAULT_SEED)
+    # Creates RUN_COUNT many (x,y) points
     get_all_random_points()
+    # Create the main data file if it DNE
     if not isfile(DATA_FILE_NAME):
         LOGGER.info('Creating data file')
         return Promise.resolve(
@@ -126,6 +139,7 @@ def move_mouse_to_random_location(delay=0):
     x_coordinate, y_coordinate = get_random_point()
     return Promise.resolve(move_mouse_to_specific_location(x_coordinate, y_coordinate))
 
+# Each script should put out these items in this order (loosely)
 FULL_STDOUT_PATTERN = r"""
 ^[\s\S]*?
 RGB:\s+\((?P<rgb>\s*\d+,\s*\d+,\s*\d+)\)
@@ -136,6 +150,7 @@ Difference:\s+(?P<diff>[\d.]+)
 [\s\S]*?$
 """
 
+# Compile it for convenience
 COMPILED_STDOUT_PATTERN = re_compile(FULL_STDOUT_PATTERN, VERBOSE | MULTILINE)
 
 
@@ -144,12 +159,15 @@ def parse_out_data(haystack):
     LOGGER.info('Parsing stdout')
     possible_result = search(COMPILED_STDOUT_PATTERN, haystack)
     if possible_result.group('diff'):
-        LOGGER.debug(possible_result.group('diff'))
+        LOGGER.debug("Diff: %f", float(possible_result.group('diff')))
         if possible_result.group('rgb'):
             raw_rgb = map(int, possible_result.group('rgb').split(','))
+            LOGGER.debug("RGB: (%d,%d,%d)", *raw_rgb)
             if possible_result.group('mouse'):
                 mouse_coords = map(
-                    int, possible_result.group('mouse').split(','))
+                    int, possible_result.group('mouse').split(',')
+                )
+                LOGGER.debug("Mouse: (%d,%d)", *mouse_coords)
                 return Promise.resolve(
                     [float(possible_result.group('diff'))]
                     + raw_rgb
@@ -165,9 +183,9 @@ def parse_out_data(haystack):
 
 def execute_script(script_name):
     """Runs the given script"""
-    extension = splitext(script_name)
     full_script_path = join(SCRIPTS_PATH, script_name)
     if isfile(full_script_path):
+        extension = splitext(script_name)
         runner = (
             'python'
             if '.py' == extension[1]
@@ -224,36 +242,6 @@ def full_run_single_script(script_name, list_of_points):
         )
     )
 
-# Currently hidden; X Window freaks out when run like this
-# def test_group_of_scripts(scripts_to_test):
-#     """Tests all the provided scripts recursively"""
-#     if not scripts_to_test:
-#         return Promise.resolve('finished')
-#     script_name = scripts_to_test.pop()
-#     return Promise.resolve(
-#         test_single_script_once(script_name)
-#     ).then(
-#         lambda result: test_group_of_scripts(scripts_to_test)
-#     )
-
-# Currently hidden; X Window freaks out when run like this
-# def test_all_the_scripts(scripts_to_test, count=0):
-#     """Recursively tests all scripts"""
-#     if 0 == count:
-#         return Promise.resolve('finished')
-#     if not scripts_to_test:
-#         return Promise.reject('No scripts')
-#     count -= 1
-#     return Promise.resolve(
-#         move_mouse_to_random_location()
-#     ).then(
-#         lambda result: Promise.resolve(
-#             test_group_of_scripts(scripts_to_test[:])
-#         )
-#     ).then(
-#         lambda result: test_all_the_scripts(scripts_to_test, count)
-#     )
-
 
 def full_run_all_the_scripts(scripts_to_test):
     """Runs each script completely before moving on"""
@@ -272,7 +260,6 @@ def full_run_all_the_scripts(scripts_to_test):
 def cli():
     """Main CLI runner"""
     bootstrap().then(
-        # lambda result: test_all_the_scripts(SCRIPTS_TO_TEST, RUN_COUNT)
         lambda result: full_run_all_the_scripts(SCRIPTS_TO_TEST[:])
     )
 
