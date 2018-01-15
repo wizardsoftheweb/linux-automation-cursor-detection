@@ -14,7 +14,19 @@ Y=(?P<y>\d+)        # Name y for easy access
 [\s\S]+$            # Ditch everything else
 """
 
-COMPILED_PATTERN = re.compile(FULL_XDO_PATTERN, re.VERBOSE | re.MULTILINE)
+COMPILED_XDO_PATTERN = re.compile(FULL_XDO_PATTERN, re.VERBOSE | re.MULTILINE)
+
+FULL_RGB_PATTERN = r"""
+^[\s\S]*?
+0,0:\s*\(\s*(?P<rgb>
+\d+,\s*
+\d+,\s*
+\d+
+)\s*
+\).*$
+"""
+
+COMPILED_RGB_PATTERN = re.compile(FULL_RGB_PATTERN, re.VERBOSE | re.MULTILINE)
 
 START = time.time()
 COORD = subprocess.check_output([
@@ -22,7 +34,7 @@ COORD = subprocess.check_output([
     'getmouselocation',
     '--shell'
 ])
-MATCHED = COMPILED_PATTERN.match(COORD)
+MATCHED = COMPILED_XDO_PATTERN.match(COORD)
 IMAGE = subprocess.Popen(
     [
         'convert',
@@ -45,9 +57,12 @@ DUMP = subprocess.Popen(
 )
 OUTPUT = IMAGE.communicate()[0]
 DUMP.wait()
+RGB = COMPILED_RGB_PATTERN.match(OUTPUT)
+SIMPLE_RGB = [int(x) / 256 for x in RGB.group('rgb').split(',')]
+print("RGB: (%d,%d,%d)" % (SIMPLE_RGB[0], SIMPLE_RGB[1], SIMPLE_RGB[2]))
+print("Mouse: (%s,%s)" % (MATCHED.group('x'), MATCHED.group('y')))
 END = time.time()
 
-print(OUTPUT)
 print("Start: %s" % (START))
 print("End: %s" % (END))
 print("Difference: %s" % (END - START))

@@ -1,339 +1,259 @@
 {% from 'includes/shell_session.j2' import shell_session %}
 
 {% block lead_paragraph %}
-I've been absolutely thrilled moving my home dev world back to Fedora. I'm not fighting OS ads, virtualization just works, and my settings actually stay the same after updates. I am, however, missing [AutoHotkey](https://autohotkey.com/). It's been an integral part of my computing world since undergrad. I've spent the better part of three years looking for a POSIX AHK clone with no luck.
-
-I've tossed around the idea of starting something similar for some time now. Obviously I don't have the expertise to make anything near as streamlined as AHK, but I do have the muleheadness to spend an entire weekend trying to bum a word or two from an `awk` chain. Tenacity is a useful trait when you have absolutely no idea what you're doing.
+This is a quick follow-up to [an earlier post today](https://blog.wizardsoftheweb.pro/quickly-detect-cursor-position-and-color/). I don't have much to add, just more code and some (basic) graphs. Direct Xlib usage is seriously the way to go.
 {% endblock %}
 
 {% include 'includes/front_matter.j2' %}
 
 {% block content %}
 
-## Background
+## Code
 
-Several months ago I began drafting a project along these lines. I think [RobotJS](http://robotjs.io/) is pretty neat, and I've been looking for an excuse to use it. Bundling it via [Electron](https://electronjs.org/) would make the result consumable everywhere, sidestepping the AHK-proprietary concern.
+You can find everything here [in the repo](https://github.com/wizardsoftheweb/linux-automation-cursor-detection).
 
-However, Electron is a Chromium wrapper. It's got a ton of bloat and the whole Chromium thing to worry about. I typically hit my macros pretty hard, so an app that has to juggle many intensive GUI actions while being an intensive GUI might not be the best. (Note: I didn't actually pursue this, so I could be totally wrong and Electron might be faster.) I decided to mess around with a few other ideas this weekend.
+## Script Runner
 
-I'd like to build something simple this weekend to figure out a few new components. I don't have any set goals, but these things are in the back of my head:
+To get some data, I had to revamp most of the scripts from the first post. I made sure all of them exported these things:
 
-* Lightweight: When Electron is your baseline everything's an improvement
-* Cross-platform: If nothing else, the RHEL and Debian ecosystems
-* Fast: I feel like 10+ ops a second isn't asking too much
+* RGB triplet: `pyautogui` seems [to limit its output](https://pyautogui.readthedocs.io/en/latest/screenshot.html#pixel-matching), so I reduced everything down to `[0,255]`
+* Mouse position: I wanted to use this for color comparisons, which hasn't happened yet
+* Action run time: This previously included setup and pixel hunting; it now also includes RGB and mouse parsing
 
-## Software
+After a fair amount of trial-and-error (X11 apparently gets cranky at some of the abrupt switches I was attempting), I finally settled on [this approach](https://github.com/wizardsoftheweb/linux-automation-cursor-detection/blob/master/utilities/script-runner.py) using promises and subprocesses.
 
-I mention some software during this post. I install everything here, but I remove some of it later. YMMV. If you're in the Debian ecosystem, this should work but the packages will probably have completely different names.
+The runner creates a bunch of random points, then, for each script, moves the cursor to each point and captures data. It's untested right now (I'm sorry 🙃) but I did run it many, many times on my machine.
 
-* [`xdotool` and its dependencies](http://www.semicomplete.com/projects/xdotool/)
-    {{
-        shell_session("$ sudo dnf install xdotool")
-    }}
-* [ImageMagick](https://www.imagemagick.org/script/download.php)
-    {{
-        shell_session("$ sudo dnf install ImageMagick")
-    }}
-* `xwd`: You might have to hunt for this executable's provider.
-    {{
-        shell_session("""\
-$ dnf provides xwd
-Last metadata expiration check: 0:10:01 ago on Sun 14 Jan 2018 06:28:40 AM UTC.
-xorg-x11-apps-7.7-18.fc27.x86_64 : X.Org X11 applications
-Repo        : fedora
-Matched from:
-Provide    : xwd = 1.0.6
-$ sudo dnf install xorg-x11-apps
-""")
-    }}
-* Depending on your Python setup, you might already have these external dependencies.
+## Raw Data
 
-    {{
-        shell_session("""\
-$ sudo dnf install \\
-        python{2,3}-{tkinter,xlib} \\
-        scrot
-""")
-    }}
+I did a quick run of 100 points (so 400 total data points) this afternoon. Rather than try to get a good table script up and running on my blog, I'm going to leave the data in GitHub. Check out [the full CSV](https://github.com/wizardsoftheweb/linux-automation-cursor-detection/blob/master/data/run_time_comparison.csv) to see everything.
 
-* Finally, for good measure, check the `pip` dependencies:
+## Munging Setup
 
-    {{
-        shell_session("""\
-$ pip install --user \\
-        pyautogui \\
-        Xlib
-""")
-    }}
-
-## My First Cursor Position
-
-You can't automate the mouse if you don't know where it is. `xdotool` provides fast and easy access to the cursor (among other things!).
+I threw everything in [RStudio](https://www.rstudio.com/) because I don't know what else to look for or use (yet). Stick with what you know, right? I'm going to run mean and median as well as create [violin plots](https://en.wikipedia.org/wiki/Violin_plot). You can skim [the whole thing at once](https://github.com/wizardsoftheweb/linux-automation-cursor-detection/blob/master/utilities/process-run_time_comparison.R) or follow along below.
 
 {{
     shell_session("""\
-$ xdotool getmouselocation
-x:2478 y:1603 screen:0 window:48234503
-$ xdotool getmouselocation --shell
-X=2468
-Y=1265
-SCREEN=0
-WINDOW=48234503
-$ eval $(xdotool getmouselocation --shell); echo $X
-2468
-$ eval $(xdotool getmouselocation --shell); echo $X
-2873
-$ eval $(xdotool getmouselocation --shell); echo $X
-2456
+> library(readr)
+> library(vioplot)
+> library(dplyr)
+> run_time_comparison <- read_csv(\"../data/run_time_comparison.csv\")
+Parsed with column specification:
+cols(
+  script_name = col_character(),
+  run_time = col_double(),
+  red = col_integer(),
+  green = col_integer(),
+  blue = col_integer(),
+  x_coordinate = col_integer(),
+  y_coordinate = col_integer(),
+  finished = col_double()
+)
 """)
 }}
 
-The only downside is trying to consume this. It might be a better idea to try native options.
-
-## `pyautogui`
-
-`pyautogui` is one of those native options. Al Sweigart wrote [a great little intro](https://automatetheboringstuff.com/chapter18/) that I highly recommend reading. The tool is simple and fast, which is what we're looking for.
-
-{{
-    highlight_block(
-        join('scripts', 'pyautogui-geometry.py'),
-        blob_path=join('scripts', 'pyautogui-geometry.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'pyautogui-geometry.py'
-    )
-}}
+## `pyautogui-pixel-color.py`
 
 {{
     shell_session("""\
-$ python scripts/pyautogui-geometry.py
-Screen: 3000x1920
-Mouse: (2570,1597)
-Start: 1515917871.17
-End: 1515917871.17
-Difference: 0.000105142593384
+> pyautogui_pixel_color_py = dplyr::filter(run_time_comparison,
+#                                          script_name == \"pyautogui-pixel-color.py\")
+> mean(pyautogui_pixel_color_py$run_time)
+[1] 280.9725
+> median(pyautogui_pixel_color_py$run_time)
+[1] 280.2196
+> png(
+#   filename = \"../output/violin-pyautogui-pixel-color.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   pyautogui_pixel_color_py$run_time,
+#   names = c(\"pyautogui-pixel-color.py\"),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
 """)
 }}
 
-`pyautogui` can also work with the screen's images and colors. Detecting color under the cursor is a great way to trigger actions, especially in routine applications.
+![violin-pyautogui-pixel-color](/content/images/2018/01/violin-pyautogui-pixel-color.png)
 
-{{
-    highlight_block(
-        join('scripts', 'pyautogui-pixel-color.py'),
-        blob_path=join('scripts', 'pyautogui-pixel-color.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'pyautogui-pixel-color.py'
-    )
-}}
+## `xlib-color.py`
 
 {{
     shell_session("""\
-$ python scripts/pyautogui-pixel-color.py
-Screen: 3000x1920
-Mouse: (2731,1766)
-RGB: (20, 21, 22)
-Start: 1515918345.91
-End: 1515918346.19
-Difference: 0.282289028168
+> xlib_color_py = dplyr::filter(run_time_comparison, script_name == \"xlib-color.py\")
+> mean(xlib_color_py$run_time)
+[1] 0.396111
+> median(xlib_color_py$run_time)
+[1] 0.3905296
+> png(
+#   filename = \"../output/violin-xlib-color.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(xlib_color_py$run_time,
+#         names = c(\"xlib-color.py\"),
+#         col = \"deepskyblue2\")
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
 """)
 }}
 
-Unfortunately, `pyautogui` is super slow. No matter what, it screenshots everything, then returns what you requested.
+![violin-xlib-color](/content/images/2018/01/violin-xlib-color.png)
 
-{{
-    highlight_block(
-        join('scripts', 'pyautogui-full-vs-region.py'),
-        blob_path=join('scripts', 'pyautogui-full-vs-region.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'pyautogui-pixel-color.py'
-    )
-}}
+## `xwd-convert-chained.py`
 
 {{
     shell_session("""\
-$ python scripts/pyautogui-full-vs-region.py
-Using a region
-Screen: 3000x1920
-Mouse: (2416,1456)
-RGB: (20, 21, 22)
-Start: 1515919266.8
-End: 1515919267.09
-Difference: 0.286885023117
-==========
-Full screen
-Screen: 3000x1920
-Mouse: (2416,1456)
-Start: 1515919267.09
-End: 1515919267.37
-Difference: 0.281718969345
+> xwd_convert_chained_py = dplyr::filter(run_time_comparison, script_name == \"xwd-convert-chained.py\")
+> mean(xwd_convert_chained_py$run_time)
+[1] 220.0624
+> median(xwd_convert_chained_py$run_time)
+[1] 219.6156
+> png(
+#   filename = \"../output/violin-xwd-convert-chained.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   xwd_convert_chained_py$run_time,
+#   names = c(\"xwd-convert-chained.py\"),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
 """)
 }}
 
-Smaller screens will do better; [the docs mention this](https://pyautogui.readthedocs.io/en/latest/screenshot.html#the-screenshot-function). I was able to cut my time by disabling my second screen. That's neither fun nor practical, so I put `pyautogui` aside for now.
+![violin-xwd-convert-chained](/content/images/2018/01/violin-xwd-convert-chained.png)
 
-## Frankenstein
-
-I have to admit, I was kinda stumped at this point. `pyautogui` is well-written and seriously vetted. I too would have gone the screenshot route, which means I too would be much too slow. A different approach is necessary, but I don't know what.
-
-Luckily I stumbled into `xwd` via [a wonderfully succinct `bash` solution](https://stackoverflow.com/a/25498342/2877698). It's the [`X` `W`indow `D`umping utility](http://www.xfree86.org/current/xwd.1.html). That's insanely useful here, since X is what runs the system. `xwd`, in theory, has all of the screen information I could want. The linked solution uses ImageMagick [to convert the dump](https://github.com/ImageMagick/ImageMagick/blob/master/coders/xwd.c); not only did I not know it was possible to get an X dump, I also did not know ImageMagick would parse it beautifully (I would have guessed that part eventually).
-
-### `bash`
-{{
-    highlight_block(
-        join('scripts', 'xwd-convert.sh'),
-        blob_path=join('scripts', 'xwd-convert.sh'),
-        explicit_lexer_name = 'BashLexer',
-        external_source_link = 'https://stackoverflow.com/a/25498342/2877698',
-        title = 'xwd-convert.sh'
-    )
-}}
+## `xwd-convert.sh`
 
 {{
     shell_session("""\
-$ scripts/xwd-convert.sh
-ImageMagick pixel enumeration: 1,1,65535,srgb
-0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
-Start: 1515922099742
-End: 1515922100086
-Difference: 344
+> xwd_convert_sh = dplyr::filter(run_time_comparison, script_name == \"xwd-convert.sh\")
+> mean(xwd_convert_sh$run_time)
+[1] 236.21
+> median(xwd_convert_sh$run_time)
+[1] 242
+> png(
+#   filename = \"../output/violin-xwd-convert.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(xwd_convert_sh$run_time,
+#         names = c(\"xwd-convert.sh\"),
+#         col = \"deepskyblue2\")
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
 """)
 }}
 
-That's even slower than `pyautogui`. To be fair, we should probably build it in Python.
+![violin-xwd-convert](/content/images/2018/01/violin-xwd-convert.png)
 
-### Disconnected and Secure
+## All Together
 
-In order to convert it to Python, we'll have to break the pipes. [Shell injection](https://en.wikipedia.org/wiki/Code_injection#Shell_injection) is no joke.
-
-{{
-    highlight_block(
-        join('scripts', 'xwd-convert-disconnected.py'),
-        blob_path=join('scripts', 'xwd-convert-disconnected.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'xwd-convert-disconnected.py'
-    )
-}}
+Because of `xlib-color.py`, this graph isn't terribly useful. There's too much range.
 
 {{
     shell_session("""\
-$ python scripts/xwd-convert-disconnected.py
-X=2291
-Y=1551
-SCREEN=0
-WINDOW=48234503
-
-ImageMagick pixel enumeration: 1,1,65535,srgb
-0,0: (9766,35723,53970)  #268BD2  srgb(38,139,210)
-
-Start: 1515923808.71
-End: 1515923809.05
-Difference: 0.338629961014
+> png(
+#   filename = \"../output/violin-all.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   pyautogui_pixel_color_py$run_time,
+#   xlib_color_py$run_time,
+#   xwd_convert_chained_py$run_time,
+#   xwd_convert_sh$run_time,
+#   names = c(
+#     \"pyautogui-pixel-color.py\",
+#     \"xlib-color.py\",
+#     \"xwd-convert-chained.py\",
+#     \"xwd-convert.sh\"
+#   ),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
 """)
 }}
 
-However, that didn't seem to give us any extra time. Chaining the commands might work in our favor here.
+![violin-all](/content/images/2018/01/violin-all.png)
 
-### Chained
+## Slow Only
 
-Rather than totally isolate the commands, we can redirect their output. It's not quite a shell, as the output from one is finished and sanitized before being sent on, but it functions in a similar manner.
-
-I spent at least an hour trying to figure out how to multiplex stdin on the file command. If you know of a clever way to do that without setting environment variables, I'd love to hear about it. I wasn't able to come up with anything that worked, so the coordinates aren't part of the pipe chain.
-
-{{
-    highlight_block(
-        join('scripts', 'xwd-convert-chained.py'),
-        blob_path=join('scripts', 'xwd-convert-chained.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'xwd-convert-chained.py'
-    )
-}}
+This is one is a bit better. Unfortunately, it does a good job of highlighting how slow `pyautogui` can be.
 
 {{
     shell_session("""\
-$ python scripts/xwd-convert-chained.py
-ImageMagick pixel enumeration: 1,1,65535,srgb
-0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
-
-Start: 1515929723.34
-End: 1515929723.65
-Difference: 0.312852144241
+> png(
+#   filename = \"../output/violin-slow.png\",
+#   units = \"px\",
+#   width = 860,
+#   height = 558,
+#   pointsize = 12,
+#   res = 96
+#)
+> vioplot(
+#   pyautogui_pixel_color_py$run_time,
+#   xwd_convert_chained_py$run_time,
+#   xwd_convert_sh$run_time,
+#   names = c(
+#     \"pyautogui-pixel-color.py\",
+#     \"xwd-convert-chained.py\",
+#     \"xwd-convert.sh\"
+#   ),
+#   col = \"deepskyblue2\"
+#)
+> title(\"Violin Plot of Script Run Time\",
+#       ylab = \"Milliseconds\")
+> dev.off()
+RStudioGD
+        2
 """)
 }}
 
-It's still absysmally slow. We haven't actually changed how we're getting the dump and parsing it, so that makes sense.
+![violin-slow](/content/images/2018/01/violin-slow.png)
 
-### Shelled
+## Conclusions
 
-**DON'T DO THIS IN PRODUCTION**. The docs will [warn you too](https://docs.python.org/2/library/subprocess.html#frequently-used-arguments). I threw this script together quickly to make sure everything was working as intended.
+* `python-xlib` is scary fast. That's so awesome.
+* `pyautogui` is slower than I thought. It does seem to maintain a "fairly stable slow, pace, though, in comparison to the others."
+* Chaining commands via Python is actually, on average, faster than running things through `bash`. I don't know if that's because of the additional `awk` processing on the tail end of `xwd-convert.sh` or something else. It bears some investigation.
 
-{{
-    highlight_block(
-        join('scripts', 'xwd-convert-dangerous.py'),
-        blob_path=join('scripts', 'xwd-convert-dangerous.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'xwd-convert-dangerous.py'
-    )
-}}
-
-{{
-    shell_session("""\
-$ python scripts/xwd-convert-dangerous.py
-ImageMagick pixel enumeration: 1,1,65535,srgb
-0,0: (5140,5397,5654)  #141516  srgb(20,21,22)
-
-START: 1515930641.2
-End: 1515930641.52
-Difference: 0.320123195648
-""")
-}}
-
-Once again, we're not seeing a time boost because we're just shuffling code around. The important bits haven't changed.
-
-## Xlib
-
-I spent most of Saturday trying to figure out how to parse a `xwd` result in Python. I got absolutely nowhere. There are many good resources and several example parsers, but nothing worked out of the box for me. [The header that describes the dump](https://www.x.org/archive/X11R7.5/doc/man/man1/xwd.1.html#toc5), `XWDFile.h`, is apparently different enough across distros that, in combination with having absolutely no idea how properly parse binary files, I couldn't figure it out. I discovered this morning that I had been using a newer (or older?) version of the file with some major differences (e.g. 32bit vs 64bit) as a reference.
-
-{{
-    shell_session("""\
-$ sudo find /usr -type f -name 'XWDFile.h'
-/usr/include/X11/XWDFile.h
-""")
-}}
-
-However, even knowing that in hindsight, I lost interest in parsing the dumps manually somewhere around the fourth hour of knowing the byte order was wrong but having no idea how to debug it. The image at the top of this post shows some of my failed attempts to test and retry. I learned quite a bit about X11 muddling my way through it, so I was able to refine my research and started getting useful hits. Eventually, I discovered [this SO answer](https://stackoverflow.com/a/17525571/2877698), which gave me the library I needed to track down.
-
-[The Python X Library, `python-xlib`,](https://github.com/python-xlib/python-xlib) provides some of the items from Xlib and seems to be the best package at the moment. I neither know enough about X11 nor care to spend the time comparing interfaces to fully grok the differences; many elements covered in the X11 docs ([e.g. `AllPlanes`](https://tronche.com/gui/x/xlib/display/display-macros.html#AllPlanes)) are either missing from `python-xlib` or do not appear to work as the external docs suggest. The library works, I was able to stumble my way through the hand-wavy docs, and, best of all, it blows everything else out of the water.
-
-{{
-    highlight_block(
-        join('scripts', 'xlib-color.py'),
-        blob_path=join('scripts', 'xlib-color.py'),
-        explicit_lexer_name = 'PythonLexer',
-        title = 'xlib-color.py'
-    )
-}}
-
-{{
-    shell_session("""\
-$ python scripts/xlib-color.py
-e3fb6e6d2e25
-Start: 1515954353.75
-End: 1515954353.75
-Difference: 0.000375986099243
-""")
-}}
-
-So far, it looks like this script can consistently poll cursor colors in fewer than five milliseconds. Everything else takes at least 250 milliseconds. Depending on how fast and loose you want to play with the numbers, this solution is at least a 97.5% reduction (200 to 5) and optimistically closer to a 99.<span style="text-decoration: overline">6</span>% reduction (300 to 1).
-
-### Caveats
-
-I'm sort of waving my hands at a few things here because I still don't fully understand them yet.
-
-* I do not understand the bitmap side of things, [i.e. `XYPixmap`s](https://stackoverflow.com/a/32244336/2877698). I don't feel all that good about [`ZPixmap`s either](https://lists.freedesktop.org/archives/xorg/2017-August/058896.html) but they're at least composed of RGB triplets which is something I do get.
-* Speaking of `ZPixmap`s, I had quite a bit of trouble with `plane_mask`s as well. They're used [to hide unwanted bit planes](https://tronche.com/gui/x/xlib/GC/manipulating.html), which I just realized writing this sentence isn't anything more special than masking bits. That being said, it's not documented well in X11 and at all in `python-xlib`.
-* The pixels in `ZPixmap`s return strange data structures. This is 100% my inexperience with Python and its advanced data types. I will eventually break down the code and figure out what it's doing.
-
-Also, `python-xlib` is really awesome. I've made some comments that could be taken as passive aggressive stabs at the devs, and I want to make sure that misconception is cleared up. They've built some amazing software, they're working hard to make the world a better place, and I'm stoked about their contributions.
-
-I'm going to follow this up with another post or two playing with this stuff, doing some analysis, and trying out some implementations.
 {% endblock %}
 

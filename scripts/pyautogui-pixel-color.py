@@ -15,11 +15,11 @@ PIXEL = pyautogui.screenshot(
     )
 )
 COLOR = PIXEL.getcolors()
+print("RGB: %s" % (COLOR[0][1].__str__().replace(" ", "")))
+print("Mouse: (%d,%d)" % (MOUSE_X, MOUSE_Y))
 END = time.time()
 
 print("Screen: %dx%d" % (SCREEN_WIDTH, SCREEN_HEIGHT))
-print("Mouse: (%d,%d)" % (MOUSE_X, MOUSE_Y))
-print("RGB: %s" % (COLOR[0][1].__str__()))
 print("Start: %s" % (START))
 print("End: %s" % (END))
 print("Difference: %s" % (END - START))
